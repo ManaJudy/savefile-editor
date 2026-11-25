@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marshal Editor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">◆ Marshal&nbsp;Editor</div>
+    <button id="btn-open" title="Ctrl+O">Ouvrir un fichier</button>
+    <input type="file" id="file" hidden>
+    <span id="rt-badge"></span>
+    <span id="file-info"></span>
+    <div class="spacer"></div>
+    <button id="btn-undo" disabled>↶ Annuler</button>
+    <button id="btn-redo" disabled>↷ Rétablir</button>
+    <button id="btn-changes" disabled>Voir les modifications <span id="chg-count" class="count"></span></button>
+    <label class="chk" title="Télécharger sous le nom exact du fichier d'origine au lieu de nom_edited.ext"><input type="checkbox" id="keep-name"> nom exact</label>
+    <button id="btn-download" class="primary" title="Ctrl+S" disabled>⬇ Télécharger</button>
+    <button id="btn-json" title="Export JSON en lecture seule (débogage)" disabled>JSON</button>
+  </header>
+
+  <section class="searchbar">
+    <input id="q" type="search" placeholder="Rechercher clés, ivars, classes, symboles, valeurs…  (Ctrl+F)" autocomplete="off">
+    <select id="q-scope" title="Où chercher">
+      <option value="all">Partout</option>
+      <option value="keys">Clés &amp; ivars</option>
+      <option value="classes">Classes</option>
+      <option value="values">Valeurs</option>
+    </select>
+    <select id="q-type" title="Type du nœud trouvé">
+      <option value="all">Tous types</option>
+      <option value="num">Nombre</option>
+      <option value="int">Integer</option>
+      <option value="float">Float</option>
+      <option value="str">String</option>
+      <option value="sym">Symbol</option>
+      <option value="bool">Bool / nil</option>
+      <option value="array">Array</option>
+      <option value="hash">Hash</option>
+      <option value="object">Object / Struct</option>
+      <option value="userdef">UserDef / Data</option>
+    </select>
+    <select id="q-mode" title="Correspondance">
+      <option value="partial">Partielle</option>
+      <option value="exact">Exacte</option>
+      <option value="regex">Regex</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="q-case"> Aa</label>
+    <button id="q-go">Rechercher</button>
+    <span id="q-status" class="dim"></span>
+  </section>
+
+  <div id="dropzone">
+    <div class="dz-inner">
+      <div class="dz-icon">⇩</div>
+      <h1>Déposez un fichier Ruby Marshal</h1>
+      <p>.rxdata · .rvdata · .rvdata2 · sauvegardes Pokémon SDK / Essentials (.rxdata, .sav, .dat, sans extension)…</p>
+      <button id="dz-open" class="primary">Ouvrir un fichier</button>
+      <p class="dim small">Tout se passe dans votre navigateur : aucun fichier n'est envoyé nulle part.</p>
+    </div>
+  </div>
+
+  <div id="error-panel" hidden></div>
+
+  <main id="workspace" hidden>
+    <div id="left">
+      <div class="crumbs-bar">
+        <nav id="crumbs"></nav>
+        <button id="btn-copy-path" class="small" title="Copier le chemin du nœud sélectionné">⧉ Copier le chemin</button>
+        <label class="small">Page <select id="page-size"><option>50</option><option selected>100</option><option>250</option><option>1000</option></select></label>
+        <button id="btn-collapse" class="small">Tout replier</button>
+      </div>
+      <div id="results" hidden>
+        <div class="res-head"><b>Résultats</b><span id="res-pager"></span><button id="res-close" class="small">✕</button></div>
+        <ul id="res-list"></ul>
+      </div>
+      <div id="tree"></div>
+      <div class="legend dim small">Double-clic sur une valeur pour l'éditer · ←↑↓→ pour naviguer · Entrée pour éditer</div>
+    </div>
+    <aside id="detail"></aside>
+  </main>
+
+  <div id="modal" hidden>
+    <div class="modal-box">
+      <header><h2 id="modal-title"></h2><button id="modal-close">✕</button></header>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div id="toast"></div>
+
+  <script src="marshal-reader.js"></script>
+  <script src="marshal-writer.js"></script>
+  <script src="tree-view.js"></script>
+  <script src="search.js"></script>
+  <script src="diff.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

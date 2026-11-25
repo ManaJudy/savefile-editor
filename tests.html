@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Tests round-trip — Marshal Editor</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { overflow: auto; padding: 20px 28px; display: block; }
+    h1 { font-size: 20px; }
+    #summary { font-size: 16px; font-weight: 700; margin: 10px 0; }
+    #summary.ok { color: var(--ok); } #summary.ko { color: var(--err); }
+    table { border-collapse: collapse; width: 100%; }
+    td { padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    td.s { width: 28px; font-weight: 700; }
+    .pass { color: var(--ok); } .fail { color: var(--err); }
+    pre { margin: 0; white-space: pre-wrap; font-family: var(--mono); font-size: 12px; color: var(--err); }
+    .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 18px; margin: 18px 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Tests du parseur / writer Marshal 4.8</h1>
+  <p class="dim">Chaque fixture est lue, vérifiée, puis réécrite : le résultat doit être identique octet pour octet.
+    Les mêmes tests tournent dans Node : <code>node tests/run-node.js</code>.</p>
+  <div id="summary">Exécution…</div>
+  <table id="out"></table>
+
+  <h2 style="font-size:16px;margin-top:28px">Round-trip de vos propres fichiers</h2>
+  <div class="drop" id="drop">
+    Déposez ici des fichiers (.rxdata, .rvdata2, sauvegardes…)
+    ou <input type="file" id="files" multiple>
+  </div>
+  <table id="files-out"></table>
+
+  <script src="marshal-reader.js"></script>
+  <script src="marshal-writer.js"></script>
+  <script src="tests/fixtures.js"></script>
+  <script src="tests/test-suite.js"></script>
+  <script>
+    const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const out = document.getElementById('out');
+    MarshalTests.run((name, ok, detail) => {
+      out.insertAdjacentHTML('beforeend', `<tr><td class="s ${ok ? 'pass' : 'fail'}">${ok ? '✔' : '✘'}</td><td>${esc(name)}${
+        detail ? (ok ? ` <span class="dim">— ${esc(detail)}</span>` : `<pre>${esc(detail)}</pre>`) : ''}</td></tr>`);
+    }).then((r) => {
+      const s = document.getElementById('summary');
+      s.textContent = `${r.pass}/${r.total} tests OK` + (r.fail ? ` — ${r.fail} échec(s)` : ' — tout est au vert');
+      s.className = r.fail ? 'ko' : 'ok';
+      document.title = (r.fail ? '✘ ' : '✔ ') + document.title;
+    });
+
+    async function testFiles(files) {
+      const t = document.getElementById('files-out');
+      for (const f of files) {
+        const bytes = new Uint8Array(await f.arrayBuffer());
+        let html;
+        try {
+          const t0 = performance.now();
+          const r = MarshalTests.roundTripFile(bytes);
+          const ms = (performance.now() - t0).toFixed(0);
+          html = `<td class="s ${r.ok ? 'pass' : 'fail'}">${r.ok ? '✔' : '✘'}</td><td>${esc(f.name)} <span class="dim">${bytes.length} o · ${r.doc.stats.nodes} nœuds · ${ms} ms${
+            r.doc.prefix.length ? ' · en-tête ' + r.doc.prefix.length + ' o' : ''}</span>${r.ok ? '' : `<pre>Premier écart à l'offset ${r.rt.firstDiff} (${r.rt.origLen} → ${r.rt.newLen} o)</pre>`}</td>`;
+        } catch (e) {
+          html = `<td class="s fail">✘</td><td>${esc(f.name)}<pre>${esc(e.message)} (offset ${(e.base || 0) + (e.offset || 0)})</pre></td>`;
+        }
+        t.insertAdjacentHTML('beforeend', `<tr>${html}</tr>`);
+      }
+    }
+    document.getElementById('files').onchange = (e) => testFiles(e.target.files);
+    const drop = document.getElementById('drop');
+    drop.ondragover = (e) => e.preventDefault();
+    drop.ondrop = (e) => { e.preventDefault(); testFiles(e.dataTransfer.files); };
+  </script>
+</body>
+</html>
